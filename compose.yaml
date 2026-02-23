@@ -1,0 +1,18 @@
+services:
+  db:
+    container_name: mf_postgres
+    image: postgres:16.4
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - base-network
+volumes:
+  dbdata: # create the volume for persisting data.
