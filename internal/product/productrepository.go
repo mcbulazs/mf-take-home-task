@@ -1,6 +1,10 @@
 package product
 
-import "database/sql"
+import (
+	"database/sql"
+
+	scripts "mcbulazs/mf-take-home-task/sql"
+)
 
 type SQLProductRepository struct {
 	DB *sql.DB
@@ -13,7 +17,22 @@ func NewSQLProductRepository(db *sql.DB) *SQLProductRepository {
 }
 
 func (r *SQLProductRepository) ListProducts() ([]Product, error) {
-	return nil, nil
+	rows, err := r.DB.Query(scripts.ListProductsSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(&product.SKU, &product.Name, &product.Stock)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+	return products, nil
 }
 
 func (r *SQLProductRepository) GetTopProducts(limit int) ([]Product, error) {

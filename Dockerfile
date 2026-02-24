@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o app
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./app ./cmd/app
 
 # Stage 2: strip the binary
 FROM alpine:latest
@@ -19,5 +19,6 @@ WORKDIR /root/
 
 COPY --from=gobuild /app/app .
 
-CMD ["./app"]
+ENTRYPOINT ["./app"]
 
+CMD ["help"]

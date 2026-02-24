@@ -12,5 +12,12 @@ services:
       - 5432:5432
     volumes:
       - dbdata:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      - "db"
 volumes:
   dbdata: # create the volume for persisting data.

@@ -2,14 +2,14 @@ package db
 
 import (
 	"database/sql"
-	"embed"
 	"errors"
 	"fmt"
 	"os"
-)
 
-//go:migrations/*.sql
-var migrationFiles embed.FS
+	_ "github.com/lib/pq" // postgres driver
+
+	scripts "mcbulazs/mf-take-home-task/sql"
+)
 
 type config struct {
 	Name     string
@@ -36,8 +36,8 @@ func loadConfig() (*config, error) {
 		Name:     name,
 		User:     user,
 		Password: password,
-		Host:     "postgres",
-		SSLMode:  "diable",
+		Host:     "db",
+		SSLMode:  "disable",
 	}
 
 	return &cfg, nil
@@ -49,12 +49,18 @@ func ConnectToDB() (*sql.DB, error) {
 		return nil, err
 	}
 	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=%s",
-		cfg.Name, cfg.Password, cfg.Name, cfg.Host, cfg.SSLMode)
+		cfg.User, cfg.Password, cfg.Name, cfg.Host, cfg.SSLMode)
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to db: %w", err)
 	}
+
+	// test connection
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping db: %w", err)
+	}
+
 	if err := migrate(db); err != nil {
 		return nil, err
 	}
@@ -63,20 +69,11 @@ func ConnectToDB() (*sql.DB, error) {
 }
 
 func migrate(db *sql.DB) error {
-	schema, err := migrationFiles.ReadFile("001_init.sql")
-	if err != nil {
-		return fmt.Errorf("error reading file 001_init.sql: %w", err)
-	}
-	seed, err := migrationFiles.ReadFile("002_seed.sql")
-	if err != nil {
-		return fmt.Errorf("error reading file 002_seed.sql: %w", err)
-	}
-
-	if _, err := db.Exec(string(schema)); err != nil {
+	if _, err := db.Exec(scripts.MigrateSchemaSQL); err != nil {
 		return fmt.Errorf("error applying schema: %w", err)
 	}
 
-	if _, err := db.Exec(string(seed)); err != nil {
+	if _, err := db.Exec(scripts.MigrateSeedSQL); err != nil {
 		return fmt.Errorf("error applying seed: %w", err)
 	}
 
