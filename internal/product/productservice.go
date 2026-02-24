@@ -79,9 +79,9 @@ func (s *ProductService) Report(top int, lowStock int) error {
 	}
 	fmt.Printf("Product count: %d\n", count)
 	fmt.Printf("Product quantity sum: %d\n", sum)
-	fmt.Printf("Top %d products by stock\n", top)
+	fmt.Printf("\nTop %d products by stock\n", top)
 	printProducts(topProducts)
-	fmt.Printf("Products with stock lower then %d\n", lowStock)
+	fmt.Printf("\nProducts with stock lower then %d\n", lowStock)
 	printProducts(lowProducts)
 
 	return nil
