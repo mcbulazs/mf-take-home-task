@@ -1,7 +1,7 @@
 package product
 
-
 import (
+	"errors"
 	"fmt"
 )
 
@@ -10,7 +10,7 @@ type ProductRepository interface {
 	GetTopProducts(limit int) ([]Product, error)
 	GetLowStockProducts(threshold int) ([]Product, error)
 
-	ApplyMovement(id string, sku string, movement int, reason string) (applied bool, err error)
+	ApplyMovement(id string, sku string, movement int, reason string) (applied bool, newVal int, err error)
 
 	CountProducts() (int, error)
 	SumStock() (int, error)
@@ -37,7 +37,10 @@ func (s *ProductService) List() error {
 }
 
 func (s *ProductService) IncreaseQuantity(id string, sku string, qty int, reason string) error {
-	ok, err := s.Repo.ApplyMovement(id, sku, qty, reason)
+	if qty < 0 {
+		return errors.New("quantity must not be negative")
+	}
+	ok, newVal, err := s.Repo.ApplyMovement(id, sku, qty, reason)
 	if err != nil {
 		return err
 	}
@@ -45,11 +48,15 @@ func (s *ProductService) IncreaseQuantity(id string, sku string, qty int, reason
 		fmt.Println("already applied")
 		return nil
 	}
+	fmt.Printf("product(%s) stock updated to %d\n", sku, newVal)
 	return nil
 }
 
 func (s *ProductService) DecreaseQuantity(id string, sku string, qty int, reason string) error {
-	ok, err := s.Repo.ApplyMovement(id, sku, -qty, reason)
+	if qty < 0 {
+		return errors.New("quantity must not be negative")
+	}
+	ok, newVal, err := s.Repo.ApplyMovement(id, sku, -qty, reason)
 	if err != nil {
 		return err
 	}
@@ -57,6 +64,7 @@ func (s *ProductService) DecreaseQuantity(id string, sku string, qty int, reason
 		fmt.Println("already applied")
 		return nil
 	}
+	fmt.Printf("product(%s) stock updated to %d\n", sku, newVal)
 	return nil
 }
 

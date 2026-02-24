@@ -22,3 +22,12 @@ var TopNProductsSQL string
 
 //go:embed list_low_stock_products.sql
 var LowestProductsUnderSQL string
+
+//go:embed insert_stock_movement.sql
+var InsertStockMovementSQL string
+
+//go:embed update_product_stock.sql
+var UpdateProductStockSQL string
+
+//go:embed get_stock_movement.sql
+var GetStockMovementSQL string

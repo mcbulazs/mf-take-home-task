@@ -2,6 +2,7 @@ package product
 
 import (
 	"database/sql"
+	"errors"
 
 	scripts "mcbulazs/mf-take-home-task/sql"
 )
@@ -26,8 +27,38 @@ func (r *SQLProductRepository) ListProducts() ([]Product, error) {
 	return getProductsFromSQLRows(rows)
 }
 
-func (r *SQLProductRepository) ApplyMovement(id string, sku string, movement int, reason string) (applied bool, err error) {
-	return false, nil
+func (r *SQLProductRepository) ApplyMovement(id string, sku string, movement int, reason string) (applied bool, newVal int, err error) {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return false, 0, err
+	}
+	defer tx.Rollback()
+
+	var exists int
+	err = tx.QueryRow(scripts.GetStockMovementSQL, id, sku, movement).Scan(&exists)
+	if err == nil {
+		return false, 0, nil
+	} else if err != sql.ErrNoRows {
+		return false, 0, err
+	}
+
+	err = tx.QueryRow(scripts.UpdateProductStockSQL, sku, movement).Scan(&newVal)
+	if err == sql.ErrNoRows {
+		return false, 0, errors.New("SKU not found or stock would go to negative")
+	} else if err != nil {
+		return false, 0, err
+	}
+
+	_, err = tx.Exec(scripts.InsertStockMovementSQL, id, sku, movement, reason)
+	if err != nil {
+		return false, 0, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return false, 0, err
+	}
+
+	return true, newVal, nil
 }
 
 func (r *SQLProductRepository) GetTopProducts(limit int) ([]Product, error) {
