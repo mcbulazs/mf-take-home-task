@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"mcbulazs/mf-take-home-task/internal/db"
-	"mcbulazs/mf-take-home-task/internal/services"
+	"mcbulazs/mf-take-home-task/internal/product"
 )
 
 var reportCmd = &cobra.Command{
@@ -22,7 +22,8 @@ var reportCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		defer db.Close()
-		service := services.NewProductService(db)
+		repo := product.NewSQLProductRepository(db)
+		service := product.NewProductService(repo)
 		err = service.Report(top, lowStock)
 		if err != nil {
 			log.Fatal(err)
